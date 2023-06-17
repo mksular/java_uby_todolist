@@ -42,6 +42,7 @@ public class TodoList extends JFrame implements ActionListener {
     ArrayList<Priority> priorityList = new ArrayList<Priority>();
     int selectedCategoryId = 0, selectedPriorityId = 0;
     Todo selectedTodo;
+    String categoryName, priorityName;
 
     JMenuBar menuBar;
     JMenu fileMenu, editMenu;
@@ -120,7 +121,7 @@ public class TodoList extends JFrame implements ActionListener {
         setCategoryListModel();
         comboCategory = new JComboBox(categoryListModel);
         comboCategory.setName("comboCategory");
-        comboCategory.setBorder(BorderFactory.createTitledBorder("Note"));
+        comboCategory.setBorder(BorderFactory.createTitledBorder("Kategori"));
         comboCategory.setRenderer(new CategoryRenderer());
         comboCategory.addActionListener(this);
 
@@ -188,12 +189,12 @@ public class TodoList extends JFrame implements ActionListener {
                 if (e.getValueIsAdjusting() == false) {
                     Todo currentTodo = (Todo) todoListView.getSelectedValue();
                     selectedTodo = currentTodo;
-                    System.out.println(currentTodo.title + " seçildi");
+
                     btnAdd.setVisible(false);
                     btnEdit.setVisible(true);
                     btnDelete.setVisible(true);
                     btnCancel.setVisible(true);
-                    setRightPanel();
+                    setDisabledRightPanel();
 
                 }
             }
@@ -248,6 +249,9 @@ public class TodoList extends JFrame implements ActionListener {
 
     private void setTodoListModel() {
         todoListModel.removeAllElements();
+
+        System.out.println("elementler silindi");
+
         for (Todo object : todoList) {
             todoListModel
                     .addElement(new Todo(object.id, object.title, object.startDate, object.endDate, object.categoryId,
@@ -332,7 +336,14 @@ public class TodoList extends JFrame implements ActionListener {
                 btnEdit.setVisible(false);
                 btnCancel.setVisible(false);
                 selectedTodo = null;
-                setRightPanel();
+                setDisabledRightPanel();
+            }
+
+            if (button.getName() == "btnDelete") {
+                resetForm();
+                todoList.remove(selectedTodo);
+                JOptionPane.showMessageDialog(null, "Kayıt Silindi");
+                setTodoListModel();
             }
 
             System.out.println("buton tıklandı");
@@ -342,37 +353,69 @@ public class TodoList extends JFrame implements ActionListener {
 
     }
 
-    private void setRightPanel() {
-      
+    private void setDisabledRightPanel() {
+
         txtTitle.disable();
         txtTitle.setText(selectedTodo.title);
 
         txtStartDate.disable();
-        txtStartDate.setValue(selectedTodo.startDate);
+        txtStartDate.setText(selectedTodo.startDate.toString());
+        // System.out.println(selectedTodo.startDate);
 
+        txtEndDate.disable();
+        txtEndDate.setText(selectedTodo.endDate.toString());
 
         comboCategory.disable();
 
+        for (Category category : categoryList) {
+            if (selectedTodo.categoryId == category.id) {
+                categoryName = category.title;
+            }
+        }
+
+        for (Priority priority : priorityList) {
+            if (selectedTodo.priorityId == priority.id) {
+                priorityName = priority.title;
+            }
+        }
+
+        comboCategory.getModel().setSelectedItem(new Category(selectedTodo.categoryId, categoryName));
 
         comboPriority.disable();
+        comboPriority.getModel().setSelectedItem(new Priority(selectedTodo.priorityId, priorityName));
 
         txtComplatePercent.disable();
+        txtComplatePercent.setText(String.valueOf(selectedTodo.complatePercent));
+
         txtNote.disable();
-       
+        txtNote.setText(selectedTodo.note);
+
     }
 
     private void resetForm() {
         txtTitle.setText("");
+        txtTitle.enable();
         txtNote.setText("");
+        txtNote.enable();
+
         txtComplatePercent.setText("0");
+        txtComplatePercent.enable();
+
+        txtStartDate.enable();
 
         txtStartDate.setValue(new Date());
+
+        txtEndDate.enable();
+
         txtEndDate.setValue(new Date());
         selectedCategoryId = 0;
+        comboCategory.enable();
+
         comboCategory.getModel().setSelectedItem(new Category(0, "Seçiniz"));
 
         selectedPriorityId = 0;
         comboPriority.getModel().setSelectedItem(new Priority(0, "Seçiniz"));
+        comboPriority.enable();
 
     }
 
