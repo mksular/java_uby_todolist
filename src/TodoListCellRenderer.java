@@ -16,11 +16,11 @@ public class TodoListCellRenderer extends JLabel implements ListCellRenderer<Tod
 
         Todo todo = (Todo) value;
         setText(todo.title);
+       
 
         if(isSelected){
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());
-
         }else{
             setBackground(list.getBackground());
             setForeground(list.getForeground());

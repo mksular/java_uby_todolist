@@ -14,6 +14,7 @@ import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
@@ -23,11 +24,14 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.text.DateFormatter;
 
@@ -37,18 +41,23 @@ public class TodoList extends JFrame implements ActionListener {
     ArrayList<Category> categoryList = new ArrayList<Category>();
     ArrayList<Priority> priorityList = new ArrayList<Priority>();
     int selectedCategoryId = 0, selectedPriorityId = 0;
+    Todo selectedTodo;
 
     JMenuBar menuBar;
     JMenu fileMenu, editMenu;
     JMenuItem todoMenuItem, categoryMenuItem, priorityMenuItem, exitMenuItem, editMenuItem, deleteMenuItem;
     JPanel mainPanel, leftPanel, rightPanel;
     JTextField txtTitle, txtComplatePercent;
-    JComboBox comboCategory, combpPriority;
+    JComboBox comboCategory, comboPriority;
     JTextArea txtNote;
     JScrollPane scrollTxtNote, scrollTodoListView;
     JFormattedTextField txtStartDate, txtEndDate;
-    JButton btnAdd, btnEdit, btnDelete;
+    JButton btnAdd, btnEdit, btnDelete, btnCancel;
     JList todoListView;
+
+    DefaultListModel todoListModel;
+
+    Vector categoryListModel, priorityListModel;
 
     TodoList() {
         getTodoList();
@@ -107,17 +116,22 @@ public class TodoList extends JFrame implements ActionListener {
         txtEndDate.setBorder(BorderFactory.createTitledBorder("Bitiş tarihi"));
         txtEndDate.setValue(new Date());
 
-        comboCategory = new JComboBox(getCategoryModel());
+        categoryListModel = new Vector();
+        setCategoryListModel();
+        comboCategory = new JComboBox(categoryListModel);
         comboCategory.setName("comboCategory");
         comboCategory.setBorder(BorderFactory.createTitledBorder("Note"));
         comboCategory.setRenderer(new CategoryRenderer());
         comboCategory.addActionListener(this);
 
-        combpPriority = new JComboBox(getPriorityModel());
-        combpPriority.setName("combpPriority");
-        combpPriority.setBorder(BorderFactory.createTitledBorder("Öncelik Seviyesi"));
-        combpPriority.setRenderer(new PriorityRenderer());
-        combpPriority.addActionListener(this);
+        priorityListModel = new Vector();
+        setPriorityListModel();
+
+        comboPriority = new JComboBox(priorityListModel);
+        comboPriority.setName("comboPriority");
+        comboPriority.setBorder(BorderFactory.createTitledBorder("Öncelik Seviyesi"));
+        comboPriority.setRenderer(new PriorityRenderer());
+        comboPriority.addActionListener(this);
 
         txtComplatePercent = new JTextField("0");
         txtComplatePercent.setBorder(BorderFactory.createTitledBorder("Tamamlandı ( % )"));
@@ -142,23 +156,50 @@ public class TodoList extends JFrame implements ActionListener {
         btnDelete.addActionListener(this);
         btnDelete.setVisible(false);
 
+        btnCancel = new JButton("İptal");
+        btnCancel.setName("btnCancel");
+        btnCancel.addActionListener(this);
+        btnCancel.setVisible(false);
+
         boxButton.add(btnAdd);
         boxButton.add(new JLabel(" "));
         boxButton.add(btnEdit);
         boxButton.add(new JLabel(" "));
         boxButton.add(btnDelete);
+        boxButton.add(new JLabel(" "));
+        boxButton.add(btnCancel);
 
         rightPanel.add(txtTitle);
         rightPanel.add(txtStartDate);
         rightPanel.add(txtEndDate);
         rightPanel.add(comboCategory);
-        rightPanel.add(combpPriority);
+        rightPanel.add(comboPriority);
         rightPanel.add(txtComplatePercent);
         rightPanel.add(scrollTxtNote);
         rightPanel.add(boxButton);
 
-        todoListView = new JList<>(getTodoModel());
+        todoListModel = new DefaultListModel();
+        setTodoListModel();
+        todoListView = new JList<>(todoListModel);
         todoListView.setCellRenderer(new TodoListCellRenderer());
+
+        ListSelectionListener sl = new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting() == false) {
+                    Todo currentTodo = (Todo) todoListView.getSelectedValue();
+                    selectedTodo = currentTodo;
+                    System.out.println(currentTodo.title + " seçildi");
+                    btnAdd.setVisible(false);
+                    btnEdit.setVisible(true);
+                    btnDelete.setVisible(true);
+                    btnCancel.setVisible(true);
+                    setRightPanel();
+
+                }
+            }
+        };
+
+        todoListView.addListSelectionListener(sl);
 
         scrollTodoListView = new JScrollPane(todoListView, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -205,33 +246,33 @@ public class TodoList extends JFrame implements ActionListener {
         }
     }
 
-    private Vector getTodoModel() {
-        Vector model = new Vector();
-
+    private void setTodoListModel() {
+        todoListModel.removeAllElements();
         for (Todo object : todoList) {
-            model.addElement(new Todo(object.id, object.title, object.startDate, object.endDate, object.categoryId,
-                    object.priorityId, object.complatePercent, object.note));
+            todoListModel
+                    .addElement(new Todo(object.id, object.title, object.startDate, object.endDate, object.categoryId,
+                            object.priorityId, object.complatePercent, object.note));
         }
-        return model;
+
     }
 
-    private Vector getCategoryModel() {
-        Vector model = new Vector();
-        model.addElement(new Category(0, "Seçiniz"));
+    private void setCategoryListModel() {
+        categoryListModel.removeAllElements();
+        categoryListModel.addElement(new Category(0, "Seçiniz"));
 
         for (Category object : categoryList) {
-            model.addElement(new Category(object.id, object.title));
+            categoryListModel.addElement(new Category(object.id, object.title));
         }
-        return model;
+
     }
 
-    private Vector getPriorityModel() {
-        Vector model = new Vector();
-        model.addElement(new Priority(0, "Seçiniz"));
+    private void setPriorityListModel() {
+        priorityListModel.removeAllElements();
+        priorityListModel.addElement(new Priority(0, "Seçiniz"));
         for (Priority object : priorityList) {
-            model.addElement(new Priority(object.id, object.title));
+            priorityListModel.addElement(new Priority(object.id, object.title));
         }
-        return model;
+
     }
 
     private void getCategoryList() {
@@ -272,18 +313,66 @@ public class TodoList extends JFrame implements ActionListener {
 
         } else if (className == "javax.swing.JButton") {
             JButton button = (JButton) e.getSource();
-            if(button.getName()=="btnAdd"){
+            if (button.getName() == "btnAdd") {
 
-                Todo todo=new Todo(todoList.size()==0?1:todoList.get(todoList.size()-1).id++, txtTitle.getText(), LocalDate.parse(txtStartDate.getText()), LocalDate.parse(txtEndDate.getText()), selectedCategoryId, selectedPriorityId, 0, txtNote.getText());
-            
+                Todo todo = new Todo(todoList.size() == 0 ? 1 : todoList.get(todoList.size() - 1).id++,
+                        txtTitle.getText(), LocalDate.parse(txtStartDate.getText()),
+                        LocalDate.parse(txtEndDate.getText()), selectedCategoryId, selectedPriorityId, 0,
+                        txtNote.getText());
+
                 todoList.add(todo);
+                JOptionPane.showMessageDialog(null, "Kayıt Eklendi!");
+                setTodoListModel();
+                resetForm();
             }
 
+            if (button.getName() == "btnCancel") {
+                btnAdd.setVisible(true);
+                btnDelete.setVisible(false);
+                btnEdit.setVisible(false);
+                btnCancel.setVisible(false);
+                selectedTodo = null;
+                setRightPanel();
+            }
 
             System.out.println("buton tıklandı");
         } else if (className == "javax.swing.JMenuItem") {
             System.out.println("menü item tıklandı");
         }
+
+    }
+
+    private void setRightPanel() {
+      
+        txtTitle.disable();
+        txtTitle.setText(selectedTodo.title);
+
+        txtStartDate.disable();
+        txtStartDate.setValue(selectedTodo.startDate);
+
+
+        comboCategory.disable();
+
+
+        comboPriority.disable();
+
+        txtComplatePercent.disable();
+        txtNote.disable();
+       
+    }
+
+    private void resetForm() {
+        txtTitle.setText("");
+        txtNote.setText("");
+        txtComplatePercent.setText("0");
+
+        txtStartDate.setValue(new Date());
+        txtEndDate.setValue(new Date());
+        selectedCategoryId = 0;
+        comboCategory.getModel().setSelectedItem(new Category(0, "Seçiniz"));
+
+        selectedPriorityId = 0;
+        comboPriority.getModel().setSelectedItem(new Priority(0, "Seçiniz"));
 
     }
 
