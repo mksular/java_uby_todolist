@@ -248,7 +248,9 @@ public class TodoList extends JFrame implements ActionListener {
     }
 
     private void setTodoListModel() {
-        todoListModel.removeAllElements();
+
+
+        //todoListModel.removeAllElements();
 
         System.out.println("elementler silindi");
 
@@ -257,7 +259,6 @@ public class TodoList extends JFrame implements ActionListener {
                     .addElement(new Todo(object.id, object.title, object.startDate, object.endDate, object.categoryId,
                             object.priorityId, object.complatePercent, object.note));
         }
-
     }
 
     private void setCategoryListModel() {
@@ -341,9 +342,16 @@ public class TodoList extends JFrame implements ActionListener {
 
             if (button.getName() == "btnDelete") {
                 resetForm();
-                todoList.remove(selectedTodo);
+                System.out.println("kayıt silinmeden nce" + todoList.size());
+                System.out.println(selectedTodo.title + " silinecek");
+
+                todoListModel.removeElement(new Todo(selectedTodo.id, selectedTodo.title, selectedTodo.startDate, selectedTodo.endDate, selectedTodo.categoryId,
+                            selectedTodo.priorityId, selectedTodo.complatePercent, selectedTodo.note));
+                //todoList.remove(selectedTodo);
+
+                System.out.println("kayıt silindikten sonra" +  todoList.size());
                 JOptionPane.showMessageDialog(null, "Kayıt Silindi");
-                setTodoListModel();
+               
             }
 
             System.out.println("buton tıklandı");
